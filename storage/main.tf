@@ -8,7 +8,7 @@ resource "azurerm_resource_group" "tfstate_rg" {
 }
 
 resource "azurerm_storage_account" "tfstate_sa" {
-  name                     = "tfstateaksdemo-dev-1234"   # must be globally unique, lowercase, <=24 chars
+  name                     = "tfstflask1234"   # must be globally unique, lowercase, <=24 chars
   resource_group_name      = azurerm_resource_group.tfstate_rg.name
   location                 = azurerm_resource_group.tfstate_rg.location
   account_tier             = "Standard"

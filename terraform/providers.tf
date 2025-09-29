@@ -1,14 +1,43 @@
 terraform {
-  required_version = ">=1.6.0"
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
       version = "~>3.100"
     }
+    kubernetes = {
+      source  = "hashicorp/kubernetes"
+      version = "~>2.31"
+    }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "~>2.13"
+    }
   }
-  # backend "azurerm" {}
+  backend "azurerm" {}
 }
 
 provider "azurerm" {
   features {}
+}
+
+# Get AKS cluster credentials dynamically
+data "azurerm_kubernetes_cluster" "aks" {
+  name                = azurerm_kubernetes_cluster.aks.name
+  resource_group_name = azurerm_resource_group.rg.name
+}
+
+provider "kubernetes" {
+  host                   = data.azurerm_kubernetes_cluster.aks.kube_config[0].host
+  client_certificate     = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+  client_key             = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+  cluster_ca_certificate = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+}
+
+provider "helm" {
+  kubernetes {
+    host                   = data.azurerm_kubernetes_cluster.aks.kube_config[0].host
+    client_certificate     = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config[0].client_certificate)
+    client_key             = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config[0].client_key)
+    cluster_ca_certificate = base64decode(data.azurerm_kubernetes_cluster.aks.kube_config[0].cluster_ca_certificate)
+  }
 }

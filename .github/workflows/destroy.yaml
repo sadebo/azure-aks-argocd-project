@@ -2,12 +2,12 @@ name: Destroy AKS + ArgoCD
 
 on:
   workflow_dispatch:
-    # manual trigger only (to avoid accidents)
+    # manual trigger only
 
 jobs:
   destroy:
     runs-on: ubuntu-latest
-    environment: dev # same environment as deploy, reuses secrets
+    environment: dev # same environment secrets as deploy
 
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
@@ -31,14 +31,8 @@ jobs:
           -p $ARM_CLIENT_SECRET \
           --tenant $ARM_TENANT_ID
 
-    - name: Terraform Destroy (AKS + ACR)
+    - name: Terraform Destroy (AKS + ACR only)
       working-directory: terraform
-      run: |
-        terraform init
-        terraform destroy -auto-approve
-
-    - name: Terraform Destroy (Storage)
-      working-directory: storage
       run: |
         terraform init
         terraform destroy -auto-approve

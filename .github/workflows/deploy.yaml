@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev # <-- GitHub Environment (where secrets live)
+    environment: dev # GitHub environment (secrets stored here)
 
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
@@ -26,13 +26,9 @@ jobs:
       with:
         terraform_version: 1.9.5
 
-    - name: Terraform Init (storage backend)
-      working-directory: storage
-      run: |
-        terraform init
-        terraform apply -auto-approve
+    # 👇 Storage init step removed — you create it manually once
 
-    - name: Terraform Init (AKS + ACR)
+    - name: Terraform Init + Apply (AKS + ACR)
       working-directory: terraform
       run: |
         terraform init
@@ -44,10 +40,6 @@ jobs:
           -u $ARM_CLIENT_ID \
           -p $ARM_CLIENT_SECRET \
           --tenant $ARM_TENANT_ID
-
-    - name: Get AKS Credentials
-      run: |
-        az aks get-credentials -g aks-rg -n aks-demo --overwrite-existing
 
     - name: Build & Push App Image
       run: |

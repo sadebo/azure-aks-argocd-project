@@ -13,6 +13,9 @@ resource "azurerm_kubernetes_cluster" "aks" {
     name       = "system"
     node_count = 2
     vm_size    = "Standard_B2s"
+    upgrade_settings {
+      max_surge = "10%"
+    }
   }
 
   identity {

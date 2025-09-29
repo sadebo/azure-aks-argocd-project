@@ -45,8 +45,9 @@ jobs:
         docker build -t parallelacr9875.azurecr.io/flask-app:v1 ./app
         docker push parallelacr9875.azurecr.io/flask-app:v1
 
-    - name: Bootstrap K8s (Ingress, Cert-Manager, ArgoCD core)
+    # 👇 NEW: Fetch AKS kubeconfig for kubectl
+    - name: Get AKS Credentials
       run: |
-        kubectl apply -f bootstrap/ingress-nginx.yaml
-        kubectl apply -f bootstrap/cert-manager.yaml
-        kubectl apply -f bootstrap/argocd-core.yaml
+        az aks get-credentials \
+          --resource-group aks-rg \
+          --na

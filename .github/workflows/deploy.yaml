@@ -9,7 +9,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: dev # GitHub environment (secrets stored here)
+    environment: dev
 
     env:
       ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
@@ -44,14 +44,18 @@ jobs:
           --tenant $ARM_TENANT_ID
         az account set --subscription $ARM_SUBSCRIPTION_ID
 
-    # --- Build & Push App Image
+    # --- Build & Push App Image (tagged with SHA + latest)
     - name: Build & Push Flask App
       run: |
+        IMAGE_TAG=${GITHUB_SHA::7}
         az acr login --name parallelacr9875
-        docker build -t parallelacr9875.azurecr.io/flask-app:v1 ./app
-        docker push parallelacr9875.azurecr.io/flask-app:v1
+        docker build -t parallelacr9875.azurecr.io/flask-app:$IMAGE_TAG \
+                     -t parallelacr9875.azurecr.io/flask-app:latest ./app
+        docker push parallelacr9875.azurecr.io/flask-app:$IMAGE_TAG
+        docker push parallelacr9875.azurecr.io/flask-app:latest
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
-    # --- Get AKS Credentials for kubectl
+    # --- Get AKS Credentials
     - name: Get AKS Credentials
       run: |
         az aks get-credentials \
@@ -62,7 +66,6 @@ jobs:
     # --- Apply Bootstrap Addons
     - name: Apply Bootstrap Addons
       run: |
-        # Cert-Manager must have CRDs first
         kubectl apply -f bootstrap/cert-manager-crds.yaml
         kubectl apply -f bootstrap/cert-manager.yaml
         kubectl apply -f bootstrap/ingress-nginx.yaml
@@ -83,7 +86,7 @@ jobs:
         kubectl rollout status deployment/cert-manager-webhook \
           -n cert-manager --timeout=300s
 
-    # --- Apply ClusterIssuer (after Cert-Manager is ready)
+    # --- Apply ClusterIssuer
     - name: Apply ClusterIssuer
       run: |
         kubectl apply -f bootstrap/letsencrypt-clusterissuer.yaml
@@ -91,18 +94,15 @@ jobs:
     # --- Wait for ArgoCD CRDs
     - name: Wait for ArgoCD CRDs
       run: |
-        echo "Waiting for ArgoCD CRDs..."
         kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=180s
         kubectl wait --for=condition=Established crd/appprojects.argoproj.io --timeout=180s
 
     # --- Wait for ArgoCD pods
     - name: Wait for ArgoCD
       run: |
-        echo "Waiting for all ArgoCD pods in namespace to become ready..."
-        kubectl wait --for=condition=ready pod \
-          -n argocd --all --timeout=600s
+        kubectl rollout status deploy/argocd-server -n argocd --timeout=600s
 
-    # --- Apply ArgoCD Ingress (after ArgoCD + ClusterIssuer are ready)
+    # --- Apply ArgoCD Ingress
     - name: Apply ArgoCD Ingress
       run: |
         kubectl apply -f bootstrap/argocd-ingress.yaml
@@ -116,7 +116,7 @@ jobs:
         echo "$PASS" > argocd-admin-password.txt
         echo "ARGOCD_PASS=$PASS" >> $GITHUB_ENV
 
-    # --- Upload ArgoCD password as artifact
+    # --- Upload ArgoCD password
     - name: Upload ArgoCD password
       uses: actions/upload-artifact@v4
       with:
@@ -142,7 +142,7 @@ jobs:
       run: |
         argocd repo add https://github.com/sadebo/azure-aks-argocd-project.git \
           --username sadebo \
-          --password ${{ secrets.PAT_GITHUB }}
+          --password ${{ secrets.GITHUB_PAT }}
 
     # --- Apply ArgoCD Projects
     - name: Apply ArgoCD Projects
@@ -153,3 +153,10 @@ jobs:
     - name: Apply ArgoCD Applications
       run: |
         kubectl apply -f argocd/applications/ -n argocd
+
+    # --- Sync Flask App with new image tag
+    - name: Sync Flask App
+      run: |
+        argocd app set flask-app \
+          --kustomize-image parallelacr9875.azurecr.io/flask-app=$IMAGE_TAG
+        argocd app sync flask-app

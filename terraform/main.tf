@@ -28,8 +28,8 @@ resource "azurerm_container_registry" "acr" {
   admin_enabled       = true
 }
 
-resource "azurerm_role_assignment" "aks_acr" {
-  principal_id         = azurerm_kubernetes_cluster.aks.identity[0].principal_id
-  role_definition_name = "AcrPull"
-  scope                = azurerm_container_registry.acr.id
-}
+# resource "azurerm_role_assignment" "aks_acr" {
+#   principal_id         = azurerm_kubernetes_cluster.aks.identity[0].principal_id
+#   role_definition_name = "AcrPull"
+#   scope                = azurerm_container_registry.acr.id
+# }

@@ -142,7 +142,7 @@ jobs:
       run: |
         argocd repo add https://github.com/sadebo/azure-aks-argocd-project.git \
           --username sadebo \
-          --password ${{ secrets.GITHUB_PAT }}
+          --password ${{ secrets.PAT_GITHUB }}
 
     # --- Apply ArgoCD Projects
     - name: Apply ArgoCD Projects

@@ -95,8 +95,6 @@ jobs:
           echo "ArgoCD pods not found yet... retrying in 10s"
           sleep 10
         done
-
-        echo "Waiting for ArgoCD pods to become ready..."
+        echo "Waiting for all ArgoCD pods to become ready..."
         kubectl wait --for=condition=ready pod \
-          -l app.kubernetes.io/part-of=argocd \
-          -n argocd --timeout=600s
+          -n argocd --all --timeout=600s

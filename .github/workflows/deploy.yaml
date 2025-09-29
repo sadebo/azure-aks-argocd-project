@@ -141,3 +141,14 @@ jobs:
       with:
         name: argocd-admin-password
         path: argocd-admin-password.txt
+
+    # --- Register GitHub repo in ArgoCD
+    - name: Register repo in ArgoCD
+      run: |
+        argocd login argocd.parallelservicesllc.com \
+          --username admin \
+          --password $ARGOCD_PASS \
+          --insecure
+        argocd repo add https://github.com/sadebo/azure-aks-argocd-project.git \
+          --username <your-username> \
+          --password ${{ secrets.PAT_GITHUB }}

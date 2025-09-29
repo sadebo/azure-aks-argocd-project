@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: https://github.com/sadebo/azure-aks-argocd-project.git
     targetRevision: main
-    path: helm-charts/flask-app
+    path: helm-charts/flask-app # Points to Helm chart
     helm:
       releaseName: flask-app
       valueFiles:

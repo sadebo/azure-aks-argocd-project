@@ -26,8 +26,6 @@ jobs:
       with:
         terraform_version: 1.9.5
 
-    # 👇 Storage init step removed — you create it manually once
-
     - name: Terraform Init + Apply (AKS + ACR)
       working-directory: terraform
       run: |

@@ -59,10 +59,13 @@ jobs:
           --name aks-demo \
           --overwrite-existing
 
-    # --- Apply Bootstrap Addons
-    - name: Apply Bootstrap YAMLs
+    # --- Apply Bootstrap Addons (correct order)
+    - name: Apply Bootstrap Addons
       run: |
-        kubectl apply -f bootstrap/
+        kubectl apply -f bootstrap/cert-manager-crds.yaml
+        kubectl apply -f bootstrap/cert-manager.yaml
+        kubectl apply -f bootstrap/ingress-nginx.yaml
+        kubectl apply -f bootstrap/argocd-core.yaml
 
     # --- Wait for Ingress Controller
     - name: Wait for Ingress-NGINX

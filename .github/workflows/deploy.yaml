@@ -18,37 +18,72 @@ jobs:
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
 
     steps:
-    - name: Checkout repo
+    # --- Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
 
+    # --- Setup Terraform
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
       with:
         terraform_version: 1.9.5
 
-    - name: Terraform Init + Apply (AKS + ACR)
+    # --- Terraform Init + Apply
+    - name: Terraform Init + Apply
       working-directory: terraform
       run: |
-        terraform init
-        terraform apply -auto-approve
+        terraform init -input=false
+        terraform apply -auto-approve -input=false
 
-    - name: Login to Azure
+    # --- Login to Azure
+    - name: Azure Login
       run: |
         az login --service-principal \
           -u $ARM_CLIENT_ID \
           -p $ARM_CLIENT_SECRET \
           --tenant $ARM_TENANT_ID
+        az account set --subscription $ARM_SUBSCRIPTION_ID
 
-    - name: Build & Push App Image
+    # --- Build & Push App Image
+    - name: Build & Push Flask App
       run: |
         az acr login --name parallelacr9875
         docker build -t parallelacr9875.azurecr.io/flask-app:v1 ./app
         docker push parallelacr9875.azurecr.io/flask-app:v1
 
-    # 👇 NEW: Fetch AKS kubeconfig for kubectl
+    # --- Get AKS Credentials for kubectl
     - name: Get AKS Credentials
       run: |
         az aks get-credentials \
-           --resource-group aks-rg \
-           --name aks-demo \
-           --overwrite-existing
+          --resource-group aks-rg \
+          --name aks-demo \
+          --overwrite-existing
+
+    # --- Apply Bootstrap Addons
+    - name: Apply Bootstrap YAMLs
+      run: |
+        kubectl apply -f bootstrap/
+
+    # --- Wait for Ingress Controller
+    - name: Wait for Ingress-NGINX
+      run: |
+        kubectl rollout status deployment/ingress-nginx-controller \
+          -n ingress-nginx --timeout=300s
+
+    # --- Wait for Cert-Manager
+    - name: Wait for Cert-Manager
+      run: |
+        kubectl rollout status deployment/cert-manager \
+          -n cert-manager --timeout=300s
+        kubectl rollout status deployment/cert-manager-webhook \
+          -n cert-manager --timeout=300s
+
+    # --- Wait for ArgoCD
+    - name: Wait for ArgoCD
+      run: |
+        kubectl rollout status deployment/argocd-server \
+          -n argocd --timeout=300s
+        kubectl rollout status deployment/argocd-repo-server \
+          -n argocd --timeout=300s
+        kubectl rollout status deployment/argocd-application-controller \
+          -n argocd --timeout=300s

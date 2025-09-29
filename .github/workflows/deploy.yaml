@@ -98,16 +98,6 @@ jobs:
     # --- Wait for ArgoCD pods
     - name: Wait for ArgoCD
       run: |
-        echo "Waiting for ArgoCD pods to be created..."
-        for i in {1..30}; do
-          if kubectl get pods -n argocd | grep argocd-server; then
-            echo "ArgoCD pods found."
-            break
-          fi
-          echo "ArgoCD pods not found yet... retrying in 10s"
-          sleep 10
-        done
-
         echo "Waiting for all ArgoCD pods in namespace to become ready..."
         kubectl wait --for=condition=ready pod \
           -n argocd --all --timeout=600s
@@ -116,6 +106,43 @@ jobs:
     - name: Apply ArgoCD Ingress
       run: |
         kubectl apply -f bootstrap/argocd-ingress.yaml
+
+    # --- Fetch ArgoCD initial admin password
+    - name: Fetch ArgoCD initial admin password
+      id: fetch-pass
+      run: |
+        PASS=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+          -o jsonpath="{.data.password}" | base64 -d)
+        echo "$PASS" > argocd-admin-password.txt
+        echo "ARGOCD_PASS=$PASS" >> $GITHUB_ENV
+
+    # --- Upload ArgoCD password as artifact
+    - name: Upload ArgoCD password
+      uses: actions/upload-artifact@v4
+      with:
+        name: argocd-admin-password
+        path: argocd-admin-password.txt
+
+    # --- Install ArgoCD CLI
+    - name: Install ArgoCD CLI
+      run: |
+        curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.7.9/argocd-linux-amd64
+        chmod +x /usr/local/bin/argocd
+
+    # --- ArgoCD Login
+    - name: ArgoCD Login
+      run: |
+        argocd login argocd.parallelservicesllc.com \
+          --username admin \
+          --password $ARGOCD_PASS \
+          --insecure
+
+    # --- Register GitHub repo in ArgoCD
+    - name: Register GitHub repo
+      run: |
+        argocd repo add https://github.com/sadebo/azure-aks-argocd-project.git \
+          --username sadebo \
+          --password ${{ secrets.PAT_GITHUB }}
 
     # --- Apply ArgoCD Projects
     - name: Apply ArgoCD Projects
@@ -126,29 +153,3 @@ jobs:
     - name: Apply ArgoCD Applications
       run: |
         kubectl apply -f argocd/applications/ -n argocd
-
-    # --- Fetch ArgoCD initial admin password
-    - name: Fetch ArgoCD initial admin password
-      id: fetch-pass
-      run: |
-        PASS=$(kubectl -n argocd get secret argocd-initial-admin-secret \
-          -o jsonpath="{.data.password}" | base64 -d)
-        echo "$PASS" > argocd-admin-password.txt
-
-    # --- Upload ArgoCD password as artifact
-    - name: Upload ArgoCD password
-      uses: actions/upload-artifact@v4
-      with:
-        name: argocd-admin-password
-        path: argocd-admin-password.txt
-
-    # --- Register GitHub repo in ArgoCD
-    - name: Register repo in ArgoCD
-      run: |
-        argocd login argocd.parallelservicesllc.com \
-          --username admin \
-          --password $ARGOCD_PASS \
-          --insecure
-        argocd repo add https://github.com/sadebo/azure-aks-argocd-project.git \
-          --username <your-username> \
-          --password ${{ secrets.PAT_GITHUB }}

@@ -1,9 +1,4 @@
-# Data + Math
-pandas==2.2.3
-numpy==1.26.4   # last version that supports Python 3.10
-
-# Web Framework
-flask==2.3.3
-
-# WSGI Server
+flask==2.3.2
 gunicorn==23.0.0
+redis==5.0.1
+requests==2.31.0

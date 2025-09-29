@@ -156,7 +156,11 @@ jobs:
 
     # --- Sync Flask App with new image tag
     - name: Sync Flask App
+      env:
+        IMAGE_TAG: latest
       run: |
         argocd app set flask-app \
-          --kustomize-image parallelacr9875.azurecr.io/flask-app=$IMAGE_TAG
-        argocd app sync flask-app
+          --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
+          --helm-set image.tag=$IMAGE_TAG \
+          --grpc-web
+        argocd app sync flask-app --grpc-web

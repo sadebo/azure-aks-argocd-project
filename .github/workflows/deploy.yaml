@@ -66,7 +66,8 @@ jobs:
         kubectl apply -f bootstrap/cert-manager-crds.yaml
         kubectl apply -f bootstrap/cert-manager.yaml
         kubectl apply -f bootstrap/ingress-nginx.yaml
-        kubectl apply -f bootstrap/argocd-core.yaml
+        kubectl create namespace argocd || true
+        kubectl apply -n argocd -f bootstrap/argocd-core.yaml
 
     # --- Wait for Ingress-NGINX rollout
     - name: Wait for Ingress-NGINX
@@ -82,7 +83,7 @@ jobs:
         kubectl rollout status deployment/cert-manager-webhook \
           -n cert-manager --timeout=300s
 
-    # --- Wait for ArgoCD (robust)
+    # --- Wait for ArgoCD (robust, in argocd ns)
     - name: Wait for ArgoCD
       run: |
         echo "Waiting for ArgoCD pods to be created..."

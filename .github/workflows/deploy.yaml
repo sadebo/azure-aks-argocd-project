@@ -59,21 +59,22 @@ jobs:
           --name aks-demo \
           --overwrite-existing
 
-    # --- Apply Bootstrap Addons (correct order)
+    # --- Apply Bootstrap Addons
     - name: Apply Bootstrap Addons
       run: |
+        # Cert-Manager must have CRDs first
         kubectl apply -f bootstrap/cert-manager-crds.yaml
         kubectl apply -f bootstrap/cert-manager.yaml
         kubectl apply -f bootstrap/ingress-nginx.yaml
         kubectl apply -f bootstrap/argocd-core.yaml
 
-    # --- Wait for Ingress Controller
+    # --- Wait for Ingress-NGINX rollout
     - name: Wait for Ingress-NGINX
       run: |
         kubectl rollout status deployment/ingress-nginx-controller \
           -n ingress-nginx --timeout=300s
 
-    # --- Wait for Cert-Manager
+    # --- Wait for Cert-Manager rollout
     - name: Wait for Cert-Manager
       run: |
         kubectl rollout status deployment/cert-manager \
@@ -81,12 +82,9 @@ jobs:
         kubectl rollout status deployment/cert-manager-webhook \
           -n cert-manager --timeout=300s
 
-    # --- Wait for ArgoCD
+    # --- Wait for ArgoCD (pods instead of deployments)
     - name: Wait for ArgoCD
       run: |
-        kubectl rollout status deployment/argocd-server \
-          -n argocd --timeout=300s
-        kubectl rollout status deployment/argocd-repo-server \
-          -n argocd --timeout=300s
-        kubectl rollout status deployment/argocd-application-controller \
+        kubectl wait --for=condition=available pod \
+          -l app.kubernetes.io/part-of=argocd \
           -n argocd --timeout=300s

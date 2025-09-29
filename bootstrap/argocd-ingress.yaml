@@ -6,9 +6,12 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+
 spec:
+  ingressClassName: nginx # <-- Explicitly bind to nginx ingress controller
   tls:
   - hosts:
     - argocd.parallelservicesllc.com

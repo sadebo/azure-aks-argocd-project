@@ -88,6 +88,13 @@ jobs:
       run: |
         kubectl apply -f bootstrap/letsencrypt-clusterissuer.yaml
 
+    # --- Wait for ArgoCD CRDs
+    - name: Wait for ArgoCD CRDs
+      run: |
+        echo "Waiting for ArgoCD CRDs..."
+        kubectl wait --for=condition=Established crd/applications.argoproj.io --timeout=180s
+        kubectl wait --for=condition=Established crd/appprojects.argoproj.io --timeout=180s
+
     # --- Wait for ArgoCD pods
     - name: Wait for ArgoCD
       run: |
@@ -109,3 +116,29 @@ jobs:
     - name: Apply ArgoCD Ingress
       run: |
         kubectl apply -f bootstrap/argocd-ingress.yaml
+
+    # --- Apply ArgoCD Projects
+    - name: Apply ArgoCD Projects
+      run: |
+        kubectl apply -f argocd/projects/ -n argocd
+
+    # --- Apply ArgoCD Applications
+    - name: Apply ArgoCD Applications
+      run: |
+        kubectl apply -f argocd/applications/ -n argocd
+
+    # --- Fetch ArgoCD initial admin password
+    - name: Fetch ArgoCD initial admin password
+      id: fetch-pass
+      run: |
+        PASS=$(kubectl -n argocd get secret argocd-initial-admin-secret \
+          -o jsonpath="{.data.password}" | base64 -d)
+        echo "ARGOCD_PASS=$PASS" >> $GITHUB_ENV
+
+    # --- Save password to GitHub Secrets
+    - name: Save password to GitHub Secrets
+      uses: peter-evans/create-or-update-secret@v3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        secret-name: ARGOCD_INITIAL_ADMIN_PASSWORD
+        secret-value: ${{ env.ARGOCD_PASS }}

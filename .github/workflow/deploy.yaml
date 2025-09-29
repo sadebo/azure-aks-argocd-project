@@ -1,0 +1,62 @@
+name: Deploy AKS + ArgoCD
+
+on:
+  workflow_dispatch: # manual trigger
+  push:
+    branches:
+    - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev # <-- GitHub Environment (where secrets live)
+
+    env:
+      ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v4
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: 1.9.5
+
+    - name: Terraform Init (storage backend)
+      working-directory: storage
+      run: |
+        terraform init
+        terraform apply -auto-approve
+
+    - name: Terraform Init (AKS + ACR)
+      working-directory: terraform
+      run: |
+        terraform init
+        terraform apply -auto-approve
+
+    - name: Login to Azure
+      run: |
+        az login --service-principal \
+          -u $ARM_CLIENT_ID \
+          -p $ARM_CLIENT_SECRET \
+          --tenant $ARM_TENANT_ID
+
+    - name: Get AKS Credentials
+      run: |
+        az aks get-credentials -g aks-rg -n aks-demo --overwrite-existing
+
+    - name: Build & Push App Image
+      run: |
+        az acr login --name parallelacr9875
+        docker build -t parallelacr9875.azurecr.io/flask-app:v1 ./app
+        docker push parallelacr9875.azurecr.io/flask-app:v1
+
+    - name: Bootstrap K8s (Ingress, Cert-Manager, ArgoCD core)
+      run: |
+        kubectl apply -f bootstrap/ingress-nginx.yaml
+        kubectl apply -f bootstrap/cert-manager.yaml
+        kubectl apply -f bootstrap/argocd-core.yaml

@@ -5,6 +5,9 @@ This repo provisions **Azure AKS + ACR (`parallelacr9875`)** with Terraform, boo
 
 📂 Repository Structure
 
+## 📂 Repository Structure
+
+```text
 azure-aks-argocd-project/
 ├── app/                      # Sample Flask app
 │   ├── app.py
@@ -50,6 +53,7 @@ azure-aks-argocd-project/
 │   └── deploy.yaml           # CI/CD pipeline
 │
 └── README.md                 # This file
+
 
 
 🛠 Prerequisites

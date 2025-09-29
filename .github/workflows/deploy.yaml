@@ -82,9 +82,20 @@ jobs:
         kubectl rollout status deployment/cert-manager-webhook \
           -n cert-manager --timeout=300s
 
-    # --- Wait for ArgoCD (pods instead of deployments)
+    # --- Wait for ArgoCD (robust)
     - name: Wait for ArgoCD
       run: |
-        kubectl wait --for=condition=available pod \
+        echo "Waiting for ArgoCD pods to be created..."
+        for i in {1..30}; do
+          if kubectl get pods -n argocd | grep argocd-server; then
+            echo "ArgoCD pods found."
+            break
+          fi
+          echo "ArgoCD pods not found yet... retrying in 10s"
+          sleep 10
+        done
+
+        echo "Waiting for ArgoCD pods to become ready..."
+        kubectl wait --for=condition=ready pod \
           -l app.kubernetes.io/part-of=argocd \
-          -n argocd --timeout=300s
+          -n argocd --timeout=600s

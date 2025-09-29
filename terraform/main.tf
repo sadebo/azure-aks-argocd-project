@@ -17,7 +17,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
       max_surge = "10%"
     }
   }
-
   identity {
     type = "SystemAssigned"
   }

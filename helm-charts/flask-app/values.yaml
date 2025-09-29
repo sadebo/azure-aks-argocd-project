@@ -3,7 +3,8 @@ replicaCount: 2
 image:
   repository: parallelacr9875.azurecr.io/flask-app
   tag: v1
-  pullPolicy: Always
+  pullPolicy: IfNotPresent
+
 service:
   type: ClusterIP
   port: 5000
@@ -17,6 +18,12 @@ ingress:
     - path: /
       pathType: Prefix
   tls:
-  - secretName: flask-app-tls
+  - secretName: flask-tls
     hosts:
     - flask.parallelservicesllc.com
+
+env:
+- name: REDIS_HOST
+  value: redis.default.svc.cluster.local
+- name: REDIS_PORT
+  value: "6379"

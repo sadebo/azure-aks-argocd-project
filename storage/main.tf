@@ -7,6 +7,7 @@ resource "azurerm_resource_group" "tfstate_rg" {
   location = "East US"
 }
 
+
 resource "azurerm_storage_account" "tfstate_sa" {
   name                     = "tfstflask1234"   # must be globally unique, lowercase, <=24 chars
   resource_group_name      = azurerm_resource_group.tfstate_rg.name

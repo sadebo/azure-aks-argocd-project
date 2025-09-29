@@ -49,5 +49,6 @@ jobs:
     - name: Get AKS Credentials
       run: |
         az aks get-credentials \
-          --resource-group aks-rg \
-          --na
+           --resource-group aks-rg \
+           --name aks-demo \
+           --overwrite-existing

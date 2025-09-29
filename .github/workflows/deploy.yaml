@@ -83,7 +83,12 @@ jobs:
         kubectl rollout status deployment/cert-manager-webhook \
           -n cert-manager --timeout=300s
 
-    # --- Wait for ArgoCD (robust, in argocd ns)
+    # --- Apply ClusterIssuer (after Cert-Manager is ready)
+    - name: Apply ClusterIssuer
+      run: |
+        kubectl apply -f bootstrap/letsencrypt-clusterissuer.yaml
+
+    # --- Wait for ArgoCD pods
     - name: Wait for ArgoCD
       run: |
         echo "Waiting for ArgoCD pods to be created..."
@@ -95,6 +100,12 @@ jobs:
           echo "ArgoCD pods not found yet... retrying in 10s"
           sleep 10
         done
-        echo "Waiting for all ArgoCD pods to become ready..."
+
+        echo "Waiting for all ArgoCD pods in namespace to become ready..."
         kubectl wait --for=condition=ready pod \
           -n argocd --all --timeout=600s
+
+    # --- Apply ArgoCD Ingress (after ArgoCD + ClusterIssuer are ready)
+    - name: Apply ArgoCD Ingress
+      run: |
+        kubectl apply -f bootstrap/argocd-ingress.yaml

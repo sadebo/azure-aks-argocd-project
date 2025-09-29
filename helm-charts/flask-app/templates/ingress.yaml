@@ -8,6 +8,9 @@ metadata:
     cert-manager.io/cluster-issuer: letsencrypt-prod
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/acme-http01-edit-in-place: "true"
+
 spec:
   tls:
     - hosts:

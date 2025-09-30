@@ -16,6 +16,7 @@ jobs:
       ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
       ARM_SUBSCRIPTION_ID: ${{ secrets.ARM_SUBSCRIPTION_ID }}
       ARM_TENANT_ID: ${{ secrets.ARM_TENANT_ID }}
+      ARGOCD_OPTS: --grpc-web # apply globally for all argocd CLI calls
 
     steps:
     # --- Checkout repo
@@ -44,16 +45,18 @@ jobs:
           --tenant $ARM_TENANT_ID
         az account set --subscription $ARM_SUBSCRIPTION_ID
 
-    # --- Build & Push App Image (tagged with SHA + latest)
+    # --- Build & Push Flask App (tagged with SHA + latest)
     - name: Build & Push Flask App
       run: |
-        IMAGE_TAG=${GITHUB_SHA::7}
+        IMAGE_TAG=sha-${GITHUB_SHA::7}
+        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
+
         az acr login --name parallelacr9875
         docker build -t parallelacr9875.azurecr.io/flask-app:$IMAGE_TAG \
                      -t parallelacr9875.azurecr.io/flask-app:latest ./app
+
         docker push parallelacr9875.azurecr.io/flask-app:$IMAGE_TAG
         docker push parallelacr9875.azurecr.io/flask-app:latest
-        echo "IMAGE_TAG=$IMAGE_TAG" >> $GITHUB_ENV
 
     # --- Get AKS Credentials
     - name: Get AKS Credentials
@@ -154,13 +157,19 @@ jobs:
       run: |
         kubectl apply -f argocd/applications/ -n argocd
 
-    # --- Sync Flask App with new image tag
+    # --- Sync Flask App with new image tag (with retries)
     - name: Sync Flask App
-      env:
-        IMAGE_TAG: latest
       run: |
-        argocd app set flask-app \
-          --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
-          --helm-set image.tag=$IMAGE_TAG \
-          --grpc-web
-        argocd app sync flask-app --grpc-web
+        echo "Setting image tag to $IMAGE_TAG..."
+        for i in {1..5}; do
+          if argocd app set flask-app \
+              --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
+              --helm-set image.tag=$IMAGE_TAG && \
+             argocd app sync flask-app; then
+            echo "✅ Flask app synced successfully"
+            break
+          else
+            echo "⚠️ ArgoCD busy or sync failed, retrying in 20s... ($i/5)"
+            sleep 20
+          fi
+        done

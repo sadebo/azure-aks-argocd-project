@@ -144,8 +144,9 @@ jobs:
     - name: Register GitHub repo
       run: |
         argocd repo add https://github.com/sadebo/azure-aks-argocd-project.git \
-          --username sadebo \
-          --password ${{ secrets.PAT_GITHUB }}
+          --username oauth2 \
+          --password ${{ secrets.PAT_GITHUB }} \
+          --grpc-web
 
     # --- Apply ArgoCD Projects
     - name: Apply ArgoCD Projects

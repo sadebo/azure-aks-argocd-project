@@ -116,7 +116,7 @@ jobs:
       run: |
         PASS=$(kubectl -n argocd get secret argocd-initial-admin-secret \
           -o jsonpath="{.data.password}" | base64 -d)
-        echo "$PASS" > argocd-admin-password.txt
+        echo "$PASS" > argocd-admin-password.txt.   GPqQSRci-Z4vfByl
         echo "ARGOCD_PASS=$PASS" >> $GITHUB_ENV
 
     # --- Upload ArgoCD password

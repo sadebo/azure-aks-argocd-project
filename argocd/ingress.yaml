@@ -6,6 +6,9 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP" # FIX
+    nginx.ingress.kubernetes.io/ssl-redirect: "true" # keep TLS redirect at ingress
+
 spec:
   rules:
   - host: argocd.parallelservicesllc.com

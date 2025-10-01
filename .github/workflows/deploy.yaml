@@ -163,6 +163,15 @@ jobs:
       run: |
         kubectl apply -f argocd/applications/ -n argocd
 
+    # # --- Sync Flask App with new image tag
+    # - name: Sync Flask App
+    #   run: |
+    #     argocd app set flask-app \
+    #       --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
+    #       --helm-set image.tag=${IMAGE_TAG} \
+    #       --grpc-web
+    #     argocd app sync flask-app --grpc-web --async
+
     # --- Sync Flask App with new image tag
     - name: Sync Flask App
       run: |
@@ -170,4 +179,17 @@ jobs:
           --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
           --helm-set image.tag=${IMAGE_TAG} \
           --grpc-web
-        argocd app sync flask-app --grpc-web
+
+        # Retry sync up to 5 times if ArgoCD is busy
+        for i in {1..5}; do
+          if argocd app sync flask-app --grpc-web; then
+            echo "✅ ArgoCD sync succeeded"
+            exit 0
+          else
+            echo "⚠️ ArgoCD busy (attempt $i), retrying in 15s..."
+            sleep 15
+          fi
+        done
+
+        echo "❌ ArgoCD sync failed after 5 attempts"
+        exit 1

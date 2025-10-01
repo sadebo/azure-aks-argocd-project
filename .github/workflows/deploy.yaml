@@ -72,6 +72,13 @@ jobs:
         kubectl create namespace argocd || true
         kubectl apply -n argocd -f bootstrap/argocd-core.yaml
 
+    # --- Patch ArgoCD server to run with --insecure
+    - name: Patch ArgoCD server
+      run: |
+        kubectl -n argocd patch deployment argocd-server \
+          --type='json' \
+          -p='[{"op": "replace", "path": "/spec/template/spec/containers/0/args", "value":["argocd-server","--insecure"]}]'
+
     # --- Wait for Ingress-NGINX rollout
     - name: Wait for Ingress-NGINX
       run: |

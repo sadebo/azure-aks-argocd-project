@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: argocd-server
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: argocd-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: argocd-server
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: argocd-server
+    spec:
+      serviceAccountName: argocd-server
+      containers:
+      - name: argocd-server
+        image: quay.io/argoproj/argocd:v3.1.7
+        imagePullPolicy: IfNotPresent
+        command:
+        # 👈 Fix: explicitly set entrypoint
+        - argocd-server
+        args:
+        # 👈 Fix: pass flags here
+        - --insecure
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8083
+        livenessProbe:
+          httpGet:
+            path: /healthz?full=true
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+          initialDelaySeconds: 3
+          periodSeconds: 30
+        volumeMounts:
+        - name: tls-certs
+          mountPath: /app/config/tls
+        - name: ssh-known-hosts
+          mountPath: /app/config/ssh
+        - name: plugins-home
+          mountPath: /home/argocd
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tls-certs
+        configMap:
+          name: argocd-tls-certs-cm
+      - name: ssh-known-hosts
+        configMap:
+          name: argocd-ssh-known-hosts-cm
+      - name: plugins-home
+        emptyDir: {}
+      - name: tmp
+        emptyDir: {}

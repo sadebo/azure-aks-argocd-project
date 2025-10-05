@@ -154,6 +154,12 @@ jobs:
         echo "Failed to get ingress external IP"
         exit 1
 
+    - name: Get ArgoCD Ingress IP
+      id: get-ip
+      run: |
+        IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+        echo "ARGOCD_INGRESS_IP=$IP" >> $GITHUB_ENV
+
     # - name: Update DNS in Cloudflare
     #   uses: cloudflare/cli-action@v2
     #   with:
@@ -162,9 +168,9 @@ jobs:
     #     command: >
     #       dns create-or-update --zone parallelservicesllc.com --name argocd.parallelservicesllc.com --content ${{ env.IP }} --type A --ttl 120 --proxied false
 
-    - name: Create DNS record via Cloudflare API
+    - name: Create/Update DNS record via Cloudflare API
       run: |
-        curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
+        curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
           -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
           -H "Content-Type: application/json" \
           --data '{

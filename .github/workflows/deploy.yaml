@@ -154,13 +154,26 @@ jobs:
         echo "Failed to get ingress external IP"
         exit 1
 
-    - name: Update DNS in Cloudflare
-      uses: cloudflare/cli-action@v2
-      with:
-        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-        accountId: ${{ secrets.CLOUDFLARE_ZONE_ID }}
-        command: >
-          dns create-or-update --zone parallelservicesllc.com --name argocd.parallelservicesllc.com --content ${{ env.IP }} --type A --ttl 120 --proxied false
+    # - name: Update DNS in Cloudflare
+    #   uses: cloudflare/cli-action@v2
+    #   with:
+    #     apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    #     accountId: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+    #     command: >
+    #       dns create-or-update --zone parallelservicesllc.com --name argocd.parallelservicesllc.com --content ${{ env.IP }} --type A --ttl 120 --proxied false
+
+    - name: Create DNS record via Cloudflare API
+      run: |
+        curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
+          -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+          -H "Content-Type: application/json" \
+          --data '{
+            "type":"A",
+            "name":"argocd.parallelservicesllc.com",
+            "content":"'"$ARGOCD_INGRESS_IP"'",
+            "ttl":120,
+            "proxied":false
+          }'
 
     # --- ArgoCD Login
     - name: ArgoCD Login

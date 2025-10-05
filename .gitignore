@@ -35,3 +35,32 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+.terraform.d/
+.terraform.d/*
+.terraform.d/plugins/
+.terraform.d/plugin-cache/
+.terraform.d/plugin-cache/*
+.terraform.d/credentials.tfrc.json
+.terraform.d/credentials.tfrc.json
+.terraform.d/override.tf
+.terraform.d/override.tf.json
+.terraform.d/*.override.tf
+.terraform.d/*.override.tf.json
+.terraform.d/plugin-cache/*.zip
+.terraform.d/plugin-cache/*.tar.gz
+.terraform.d/plugin-cache/*.tgz
+.terraform.d/plugin-cache/*.tar
+.terraform.d/plugin-cache/*.exe
+.terraform.d/plugin-cache/*.dll
+.terraform.lock.hcl # Ignore dependency lock file, it is recommended to check this in for teams
+# Local environment variables file
+# .envrc
+.env
+.env.*local
+# IDEs and editors      
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+terraform/.terraform.lock.hcl

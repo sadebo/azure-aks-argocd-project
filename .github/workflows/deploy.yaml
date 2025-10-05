@@ -136,6 +136,32 @@ jobs:
         curl -sSL -o /usr/local/bin/argocd https://github.com/argoproj/argo-cd/releases/download/v2.7.9/argocd-linux-amd64
         chmod +x /usr/local/bin/argocd
 
+    - name: Get Ingress External IP
+      id: ingress-ip
+      run: |
+        IP=""
+        for i in {1..30}; do
+          IP=$(kubectl get svc ingress-nginx-controller -n ingress-nginx \
+            -o jsonpath='{.status.loadBalancer.ingress[0].ip}')
+          if [ ! -z "$IP" ]; then
+            echo "Ingress IP found: $IP"
+            echo "IP=$IP" >> $GITHUB_ENV
+            exit 0
+          fi
+          echo "Waiting for ingress external IP..."
+          sleep 10
+        done
+        echo "Failed to get ingress external IP"
+        exit 1
+
+    - name: Update DNS in Cloudflare
+      uses: cloudflare/cli-action@v2
+      with:
+        apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        accountId: ${{ secrets.CLOUDFLARE_ZONE_ID }}
+        command: >
+          dns create-or-update --zone parallelservicesllc.com --name argocd.parallelservicesllc.com --content ${{ env.IP }} --type A --ttl 120 --proxied false
+
     # --- ArgoCD Login
     - name: ArgoCD Login
       run: |

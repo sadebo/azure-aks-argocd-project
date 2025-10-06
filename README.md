@@ -57,7 +57,7 @@ azure-aks-argocd-project/
 
 
 🛠 Prerequisites
-
+```bash
 Azure subscription (with $200 free credit works for this POC).
 
 GitHub repo with this code.
@@ -73,9 +73,10 @@ ARM_SUBSCRIPTION_ID
 ARM_TENANT_ID
 
 GITHUB_PAT (Personal Access Token with repo scope, for ArgoCD to pull manifests).
+```
 
 ⚙️ Deployment Flow
-
+```bash
 GitHub Actions Workflow (deploy.yaml)
 Provisions AKS + ACR via Terraform.
 Builds Flask app image → pushes to ACR (parallelacr9875.azurecr.io/flask-app:v1).
@@ -120,7 +121,7 @@ Or download from GitHub Actions artifact.
 
 Login:
 
-URL: https://argocd.parallelservicesllc.com
+URL: https://argocd.parallelservicesllc.com - in my case
 
 Username: admin
 
@@ -167,6 +168,7 @@ kubectl describe certificate flask-tls -n default
 Test app:
 curl -vk https://flask.parallelservicesllc.com/healthz
 
+```
 🧹 Teardown
 
 Run the destroy workflow or manually:

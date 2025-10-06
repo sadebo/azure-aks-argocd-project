@@ -19,4 +19,6 @@ spec:
   syncPolicy:
     automated:
       prune: true
-      selfHeal: true
+      selfHeal: true # Auto-correct drift
+    syncOptions:
+    - CreateNamespace=true # Auto-create namespace if it doesn't exist

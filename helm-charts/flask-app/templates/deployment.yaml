@@ -16,7 +16,7 @@ spec:
     spec:
       {{- with .Values.image.pullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 8 }}
+      {{- toYaml . | nindent 8 }}
       {{- end }} # <-- Ensure this secret exists in your namespace
       containers:
         - name: flask-app

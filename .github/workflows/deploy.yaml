@@ -195,6 +195,21 @@ jobs:
             "proxied":false
           }'
 
+    # --- Verify DNS + HTTPS endpoint
+    - name: Verify ArgoCD endpoint
+      run: |
+        for i in {1..20}; do
+          if curl -k https://argocd.parallelservicesllc.com/ >/dev/null 2>&1; then
+            echo "✅ ArgoCD endpoint is reachable"
+            exit 0
+          else
+            echo "⚠️ Not ready yet, retrying in 15s..."
+            sleep 15
+          fi
+        done
+        echo "❌ ArgoCD endpoint not reachable after retries"
+        exit 1
+
     # --- ArgoCD Login
     - name: ArgoCD Login
       run: |
@@ -264,24 +279,31 @@ jobs:
           --operation \
           --timeout 300 \
           --grpc-web
-
-    # --- Sync Flask App with retries
-    - name: Sync Flask App
+    # # --- Sync Flask App with retries
+    # - name: Sync Flask App
+    #   run: |
+    #     MAX_RETRIES=5
+    #     RETRY_DELAY=15
+    #     for i in $(seq 1 $MAX_RETRIES); do
+    #       if argocd app set flask-app \
+    #           --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
+    #           --helm-set image.tag=${IMAGE_TAG} \
+    #           --grpc-web && \
+    #          argocd app sync flask-app --grpc-web; then
+    #         echo "✅ Sync succeeded"
+    #         exit 0
+    #       else
+    #         echo "⚠️ ArgoCD busy (attempt $i), retrying in ${RETRY_DELAY}s..."
+    #         sleep $RETRY_DELAY
+    #       fi
+    #     done
+    #     echo "❌ Sync failed after $MAX_RETRIES retries"
+    #     exit 1
+    - name: Update ArgoCD Application Image Tag
       run: |
-        MAX_RETRIES=5
-        RETRY_DELAY=15
-        for i in $(seq 1 $MAX_RETRIES); do
-          if argocd app set flask-app \
-              --helm-set image.repository=parallelacr9875.azurecr.io/flask-app \
-              --helm-set image.tag=${IMAGE_TAG} \
-              --grpc-web && \
-             argocd app sync flask-app --grpc-web; then
-            echo "✅ Sync succeeded"
-            exit 0
-          else
-            echo "⚠️ ArgoCD busy (attempt $i), retrying in ${RETRY_DELAY}s..."
-            sleep $RETRY_DELAY
-          fi
-        done
-        echo "❌ Sync failed after $MAX_RETRIES retries"
-        exit 1
+        kubectl patch application flask-app -n argocd \
+          --type merge \
+          -p "{\"spec\":{\"source\":{\"helm\":{\"parameters\":[
+            {\"name\":\"image.repository\",\"value\":\"parallelacr9875.azurecr.io/flask-app\"},
+            {\"name\":\"image.tag\",\"value\":\"${IMAGE_TAG}\"}
+          ]}}}}"

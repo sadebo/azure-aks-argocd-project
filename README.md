@@ -175,7 +175,12 @@ terraform destroy -auto-approve
 
 run this command to give the aks cluster acr permission- 
 
+
+``` Lessons learnt
+Best practice: keep values.yaml generic (no hardcoded v1), and have GitHub Actions (or ArgoCD Application params) inject the tag.
+
 az aks update \
   --name aks-demo \
   --resource-group aks-rg \
   --attach-acr parallelacr9875
+

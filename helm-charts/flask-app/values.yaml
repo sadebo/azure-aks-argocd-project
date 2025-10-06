@@ -2,7 +2,7 @@ replicaCount: 2
 
 image:
   repository: parallelacr9875.azurecr.io/flask-app
-  tag: v1
+  # tag: ""
   pullPolicy: IfNotPresent
   pullSecrets:
   - acr-auth

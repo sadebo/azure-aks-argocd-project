@@ -93,10 +93,17 @@ jobs:
         kubectl rollout status deployment/cert-manager-webhook \
           -n cert-manager --timeout=300s
 
+    # --- Create Cloudflare API token Secret for cert-manager
+    - name: Create Cloudflare Secret
+      run: |
+        kubectl create secret generic cloudflare-api-token-secret \
+          --from-literal=api-token=${{ secrets.CLOUDFLARE_API_TOKEN }} \
+          -n cert-manager --dry-run=client -o yaml | kubectl apply -f -
+
     # --- Apply ClusterIssuer
     - name: Apply ClusterIssuer
       run: |
-        kubectl apply -f bootstrap/letsencrypt-clusterissuer.yaml
+        kubectl apply -f bootstrap/letsencrypt-clusterissuer-dns.yaml
 
     # --- Wait for ArgoCD CRDs
     - name: Wait for ArgoCD CRDs

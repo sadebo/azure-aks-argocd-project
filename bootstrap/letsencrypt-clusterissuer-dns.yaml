@@ -1,0 +1,18 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-dns01
+spec:
+  acme:
+    # ACME server for production (Let's Encrypt)
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: parallelservicesllc@gmail.com # <-- change to your email
+    privateKeySecretRef:
+      name: letsencrypt-dns01-account-key
+    solvers:
+    - dns01:
+        cloudflare:
+          email: parallelservicesllc@gmail.com # <-- change to your Cloudflare email
+          apiTokenSecretRef:
+            name: cloudflare-api-token-secret
+            key: api-token

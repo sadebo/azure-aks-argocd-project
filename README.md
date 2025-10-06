@@ -172,3 +172,10 @@ curl -vk https://flask.parallelservicesllc.com/healthz
 Run the destroy workflow or manually:
 cd terraform
 terraform destroy -auto-approve
+
+run this command to give the aks cluster acr permission- 
+
+az aks update \
+  --name aks-demo \
+  --resource-group aks-rg \
+  --attach-acr parallelacr9875

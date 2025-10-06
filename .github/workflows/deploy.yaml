@@ -63,12 +63,12 @@ jobs:
           --name aks-demo \
           --overwrite-existing
 
-    - name: Attach ACR to AKS
-      run: |
-        az aks update \
-          --name aks-demo \
-          --resource-group aks-rg \
-          --attach-acr parallelacr9875 || true
+    # - name: Attach ACR to AKS
+    #   run: |
+    #     az aks update \
+    #       --name aks-demo \
+    #       --resource-group aks-rg \
+    #       --attach-acr parallelacr9875 || true
 
     # --- Apply Bootstrap Addons
     - name: Apply Bootstrap Addons
@@ -211,6 +211,26 @@ jobs:
           --username oauth2 \
           --password ${{ secrets.PAT_GITHUB }} \
           --grpc-web
+
+    # --- Create ACR imagePullSecret
+    - name: Create ACR imagePullSecret
+      env:
+        ACR_SERVER: parallelacr9875.azurecr.io
+        ACR_USERNAME: ${{ secrets.ARM_CLIENT_ID }}
+        ACR_PASSWORD: ${{ secrets.ARM_CLIENT_SECRET }}
+      run: |
+        kubectl create secret docker-registry acr-auth \
+          --docker-server=$ACR_SERVER \
+          --docker-username=$ACR_USERNAME \
+          --docker-password=$ACR_PASSWORD \
+          --docker-email=parallelservicesllc@gmail.com \
+          -n default --dry-run=client -o yaml | kubectl apply -f -
+        kubectl create secret docker-registry acr-auth \
+          --docker-server=$ACR_SERVER \
+          --docker-username=$ACR_USERNAME \
+          --docker-password=$ACR_PASSWORD \
+          --docker-email=parallelservicesllc@gmail.com \
+          -n argocd --dry-run=client -o yaml | kubectl apply -f -
 
     # --- Apply ArgoCD Projects
     - name: Apply ArgoCD Projects

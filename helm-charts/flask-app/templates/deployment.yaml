@@ -14,10 +14,10 @@ spec:
       labels:
         app: {{ .Release.Name }}
     spec:
-      {{- with .Values.image.imagePullSecrets }}
+      {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml . | nindent 10 }}
-      {{- end }} # <-- Ensure this secret exists in your namespace
+        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+      {{- end }}
       containers:
         - name: flask-app
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag  | default "latest" }}"

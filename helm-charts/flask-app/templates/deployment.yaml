@@ -16,7 +16,9 @@ spec:
     spec:
       {{- if .Values.imagePullSecrets }}
       imagePullSecrets:
-        {{- toYaml .Values.imagePullSecrets | nindent 8 }}
+        {{- range .Values.imagePullSecrets }}
+        - name: {{ .name }}
+        {{- end }}
       {{- end }}
       containers:
         - name: flask-app

@@ -5,7 +5,7 @@ image:
   tag: "latest"
   pullPolicy: IfNotPresent
 imagePullSecrets:
-  name: "acr-auth"
+- name: "acr-auth"
 
 service:
   type: ClusterIP

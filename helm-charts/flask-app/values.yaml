@@ -4,8 +4,8 @@ image:
   repository: parallelacr9875.azurecr.io/flask-app
   # tag: ""
   pullPolicy: IfNotPresent
-  pullSecrets:
-  - acr-auth
+  imagePullSecrets:
+  - "acr-auth"
 
 service:
   type: ClusterIP

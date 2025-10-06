@@ -134,21 +134,22 @@ jobs:
       run: |
         PASS=$(kubectl -n argocd get secret argocd-initial-admin-secret \
           -o jsonpath="{.data.password}" | base64 -d)
-        echo "$PASS" > argocd-admin-password.txt
+        # echo "$PASS" > argocd-admin-password.txt
         echo "ARGOCD_PASS=$PASS" >> $GITHUB_ENV
-      # --- Save ArgoCD password in GitHub Secret (via API)
-    - name: Save ArgoCD password in GitHub Secret (via API)
-      run: |
-        gh secret set ARGOCD_ADMIN_PASS --body "$ARGOCD_PASS"
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-    # # --- Upload ArgoCD password
-    # - name: Upload ArgoCD password
-    #   uses: actions/upload-artifact@v4
-    #   with:
-    #     name: argocd-admin-password
-    #     path: argocd-admin-password.txt
+    #   # --- Save ArgoCD password in GitHub Secret (via API)
+    # - name: Save ArgoCD password in GitHub Secret (via API)
+    #   run: |
+    #     gh secret set ARGOCD_ADMIN_PASS --body "$ARGOCD_PASS"
+    #   env:
+    #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    # --- Upload ArgoCD password
+    - name: Upload ArgoCD password
+      uses: actions/upload-artifact@v4
+      with:
+        name: argocd-admin-password
+        path: argocd-admin-password.txt
 
     # --- Install ArgoCD CLI
     - name: Install ArgoCD CLI

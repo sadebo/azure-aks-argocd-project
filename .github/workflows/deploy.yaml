@@ -63,6 +63,13 @@ jobs:
           --name aks-demo \
           --overwrite-existing
 
+    - name: Attach ACR to AKS
+      run: |
+        az aks update \
+          --name aks-demo \
+          --resource-group aks-rg \
+          --attach-acr parallelacr9875 || true
+
     # --- Apply Bootstrap Addons
     - name: Apply Bootstrap Addons
       run: |

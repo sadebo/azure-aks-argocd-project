@@ -5,7 +5,7 @@ metadata:
   name: {{ .Release.Name }}-ingress
   annotations:
     kubernetes.io/ingress.class: {{ .Values.ingress.className }}
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-dns01
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     service.beta.kubernetes.io/azure-load-balancer-health-probe-request-path: /healthz
     nginx.ingress.kubernetes.io/force-ssl-redirect: "true"

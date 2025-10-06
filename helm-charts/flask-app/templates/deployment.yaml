@@ -14,7 +14,7 @@ spec:
       labels:
         app: {{ .Release.Name }}
     spec:
-      {{- with .Values.image.pullSecrets }}
+      {{- with .Values.image.imagePullSecrets }}
       imagePullSecrets:
         {{- toYaml . | nindent 10 }}
       {{- end }} # <-- Ensure this secret exists in your namespace

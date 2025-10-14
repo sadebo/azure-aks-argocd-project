@@ -189,18 +189,51 @@ jobs:
     #     command: >
     #       dns create-or-update --zone parallelservicesllc.com --name argocd.parallelservicesllc.com --content ${{ env.IP }} --type A --ttl 120 --proxied false
 
-    - name: Create/Update DNS record via Cloudflare API
+    # - name: Create/Update DNS record via Cloudflare API
+    #   run: |
+    #     curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
+    #       -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+    #       -H "Content-Type: application/json" \
+    #       --data '{
+    #         "type":"A",
+    #         "name":"argocd.parallelservicesllc.com",
+    #         "content":"'"$ARGOCD_INGRESS_IP"'",
+    #         "ttl":120,
+    #         "proxied":false
+    #       }'
+    - name: Create/Update Cloudflare DNS Records
       run: |
-        curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
-          -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
-          -H "Content-Type: application/json" \
-          --data '{
-            "type":"A",
-            "name":"argocd.parallelservicesllc.com",
-            "content":"'"$ARGOCD_INGRESS_IP"'",
-            "ttl":120,
-            "proxied":false
-          }'
+        for app in flask argocd; do
+          RECORD_NAME="$app.parallelservicesllc.com"
+          EXISTING=$(curl -s -X GET "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records?type=A&name=$RECORD_NAME" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" | jq -r '.result[0].id')
+          if [ "$EXISTING" != "null" ]; then
+            echo "Updating existing record for $RECORD_NAME"
+            curl -s -X PUT "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records/$EXISTING" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{
+                "type":"A",
+                "name":"'"$RECORD_NAME"'",
+                "content":"'"${INGRESS_IP}"'",
+                "ttl":120,
+                "proxied":false
+              }'
+          else
+            echo "Creating new record for $RECORD_NAME"
+            curl -s -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/dns_records" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              --data '{
+                "type":"A",
+                "name":"'"$RECORD_NAME"'",
+                "content":"'"${INGRESS_IP}"'",
+                "ttl":120,
+                "proxied":true
+              }'
+          fi
+        done
 
     # --- Verify DNS + HTTPS endpoint
     - name: Verify ArgoCD endpoint
@@ -306,6 +339,7 @@ jobs:
     #     done
     #     echo "❌ Sync failed after $MAX_RETRIES retries"
     #     exit 1
+
     - name: Update ArgoCD Application Image Tag
       run: |
         kubectl patch application flask-app -n argocd \

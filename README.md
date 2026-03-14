@@ -3,9 +3,9 @@
 ## Overview
 This repo provisions **Azure AKS + ACR (`parallelacr9875`)** with Terraform, bootstraps ingress/cert-manager/ArgoCD, and manages app deployments with ArgoCD.
 
-📂 Repository Structure
+Repository Structure
 
-## 📂 Repository Structure
+## Repository Structure
 
 ```text
 azure-aks-argocd-project/
@@ -56,7 +56,7 @@ azure-aks-argocd-project/
 
 
 
-🛠 Prerequisites
+Prerequisites
 ```bash
 Azure subscription (with $200 free credit works for this POC).
 
@@ -75,7 +75,7 @@ ARM_TENANT_ID
 GITHUB_PAT (Personal Access Token with repo scope, for ArgoCD to pull manifests).
 ```
 
-⚙️ Deployment Flow
+Deployment Flow
 ```bash
 GitHub Actions Workflow (deploy.yaml)
 Provisions AKS + ACR via Terraform.
@@ -110,7 +110,7 @@ Deploys bootstrap components:
 
 * https://flask.parallelservicesllc.com
 
-🔑 Accessing ArgoCD
+Accessing ArgoCD
 
 Fetch the ArgoCD password:
 
@@ -127,7 +127,7 @@ Username: admin
 
 Password: (from step above)
 
-🔒 TLS & Cert-Manager
+TLS & Cert-Manager
 
 Certificates are issued by Let’s Encrypt via HTTP-01 challenge.
 
@@ -143,7 +143,7 @@ annotations:
 
 Without the last annotation, cert-manager HTTP-01 self-check fails due to HTTPS redirect.
 
-🐳 Sample Flask App
+Sample Flask App
 
 Simple Flask API with /healthz for readiness probes.
 
@@ -152,12 +152,12 @@ Connects to Redis via:
 REDIS_HOST=redis.default.svc.cluster.local
 REDIS_PORT=6379
 
-🧩 Redis
+Redis
 
 Deployed via custom Helm chart (helm-charts/redis).
 Exposed as ClusterIP service at redis.default.svc.cluster.local.
 
-✅ Verification
+Verification
 
 Check ArgoCD Applications:
 argocd app list
@@ -169,7 +169,7 @@ Test app:
 curl -vk https://flask.parallelservicesllc.com/healthz
 
 ```
-🧹 Teardown
+Teardown
 
 Run the destroy workflow or manually:
 cd terraform

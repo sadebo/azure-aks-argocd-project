@@ -2,3 +2,6 @@ flask==2.3.2
 gunicorn==23.0.0
 redis==5.0.1
 requests==2.31.0
+sqlalchemy==2.0.20
+pandas==2.1.4
+numpy==1.26.4
